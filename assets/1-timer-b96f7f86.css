@@ -1,0 +1,1 @@
+*{box-sizing:border-box}.timer{display:flex;gap:15px;margin-top:15px;font-family:Roboto,sans-serif}.field{min-width:54px;display:flex;flex-direction:column;justify-content:center;align-items:center}.value{font-size:40px;line-height:1;font-weight:500}.label{font-size:14px}
