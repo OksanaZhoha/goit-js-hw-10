@@ -1,72 +1,56 @@
-import flatpickr from "flatpickr";
-import "flatpickr/dist/flatpickr.min.css";
-import iziToast from "izitoast";
-import "izitoast/dist/css/iziToast.min.css";
+import flatpickr from 'flatpickr';
+import 'flatpickr/dist/flatpickr.min.css';
+import iziToast from 'izitoast';
+import 'izitoast/dist/css/iziToast.min.css';
+import cross from '../img/error.svg';
 
+let userSelectedDate;
+let changeDateValue;
+const inputValueTimer = document.querySelector('#datetime-picker');
+const startButton = document.querySelector('button[data-start]');
+const dataValueDays = document.querySelector('span[data-days]');
+const dataValueHours = document.querySelector('span[data-hours]');
+const dataValueMinutes = document.querySelector('span[data-minutes]');
+const dataValueSeconds = document.querySelector('span[data-seconds]');
 
-const btnStart = document.querySelector('button[data-start]');
-const dateTimePicker = document.querySelector('#datetime-picker');
-const dataDays = document.querySelector('[data-days]');
-const dataHours = document.querySelector('[data-hours]');
-const dataMinutes = document.querySelector('[data-minutes]');
-const dataSeconds = document.querySelector('[data-seconds]');
-
-btnStart.setAttribute('disabled', true);
-
-const timerInterval = 1000;
-let currentDate = new Date();
-let selectedDate = null;
-let timeToFinish = null;
+startButton.setAttribute('disabled', '');
+startButton.classList.add('disabled-button');
+inputValueTimer.classList.add('input-check');
 
 const options = {
   enableTime: true,
   time_24hr: true,
   defaultDate: new Date(),
   minuteIncrement: 1,
-  onClose: handleDateSelection,
+  onClose(selectedDates) {
+    if (selectedDates[0] < Date.now()) {
+      iziToast.show({
+        iconUrl: cross,
+        title: 'Error',
+        titleColor: '#ffffff',
+        messageColor: '#ffffff',
+        message: 'Please choose a date in the future',
+        backgroundColor: '#EF4040',
+        position: 'topRight',
+        titleSize: 16,
+        messageSize: 16,
+        maxWidth: 902,
+        close: false,
+      });
+      startButton.classList.add('disabled-button');
+      startButton.classList.remove('active-button');
+      startButton.setAttribute('disabled', '');
+    } else {
+      startButton.removeAttribute('disabled');
+      inputValueTimer.classList.add('input-disabled');
+      startButton.classList.add('active-button');
+      startButton.classList.remove('disabled-button');
+      userSelectedDate = selectedDates[0];
+    }
+  },
 };
 
-flatpickr("#datetime-picker", options);
-btnStart.addEventListener('click', handleStartButtonClick);
-
-let intervalId = null;
-
-function handleDateSelection(selectedDates) {
-  selectedDate = selectedDates[0];
-  timeToFinish = selectedDate - currentDate;
-
-  if (timeToFinish > 0) {
-    btnStart.removeAttribute('disabled');
-  } else {
-    Notify.failure('Будь ласка, виберіть дату в майбутньому', { timeout: 2000 });
-    btnStart.setAttribute('disabled', true);
-  }
-}
-
-function handleStartButtonClick() {
-  if (timeToFinish > 0) {
-    startTimer();
-    btnStart.setAttribute('disabled', true);
-    dateTimePicker.setAttribute('disabled', true);
-  }
-}
-
-function startTimer() {
-  intervalId = setInterval(updateTimer, timerInterval);
-}
-
-function updateTimer() {
-  timeToFinish -= timerInterval;
-  if (timeToFinish < 1000) {
-    stopTimer();
-    Notify.success('Час завершено', { timeout: 2000 });
-  }
-  updateInterface();
-}
-
-function stopTimer() {
-  clearInterval(intervalId);
-}
+const fp = flatpickr('#datetime-picker', options);
 
 function convertMs(ms) {
   const second = 1000;
@@ -82,19 +66,38 @@ function convertMs(ms) {
   return { days, hours, minutes, seconds };
 }
 
-function addLeadingZero({ days, hours, minutes, seconds }) {
-  const changeFormatDays = days.toString().padStart(2, "0");
-  const changeFormatHours = hours.toString().padStart(2, "0");
-  const changeFormatMinutes = minutes.toString().padStart(2, "0");
-  const changeFormatSeconds = seconds.toString().padStart(2, "0");
-
-  return { changeFormatDays, changeFormatHours, changeFormatMinutes, changeFormatSeconds };
+function addLeadingZero(value) {
+  if (value < 10) {
+    return String(value).padStart(2, '0');
+  } else {
+    return value;
+  }
 }
 
-function updateInterface() {
-  const formattedTime = addLeadingZero(convertMs(timeToFinish));
-  dataDays.textContent = formattedTime.changeFormatDays;
-  dataHours.textContent = formattedTime.changeFormatHours;
-  dataMinutes.textContent = formattedTime.changeFormatMinutes;
-  dataSeconds.textContent = formattedTime.changeFormatSeconds;
+function updateTimerValue() {
+  const delta = userSelectedDate - Date.now();
+  if (delta <= 0) {
+    clearInterval(changeDateValue);
+    return;
+  }
+  
+  startButton.classList.add('disabled-button');
+  startButton.classList.remove('active-button');
+  startButton.setAttribute('disabled', '');
+  inputValueTimer.setAttribute('disabled', '');
+  inputValueTimer.classList.remove('input-check');
+
+  const { days, hours, minutes, seconds } = convertMs(delta);
+
+  dataValueDays.textContent = addLeadingZero(days);
+  dataValueHours.textContent = addLeadingZero(hours);
+  dataValueMinutes.textContent = addLeadingZero(minutes);
+  dataValueSeconds.textContent = addLeadingZero(seconds);
+}
+
+startButton.addEventListener('click', handleStartUpdateTimerValue);
+
+function handleStartUpdateTimerValue() {
+  updateTimerValue();
+  changeDateValue = setInterval(updateTimerValue, 1000);
 }
