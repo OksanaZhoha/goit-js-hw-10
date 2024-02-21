@@ -14,8 +14,9 @@ function handleShowPromise(evt) {
       setTimeout(() => {
         if (value === 'fulfilled') {
           res(time);
+        } else {
+          rej(time);
         }
-        rej(time);
       }, delay);
       formEl.reset();
     });
