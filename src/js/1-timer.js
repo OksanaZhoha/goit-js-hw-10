@@ -67,17 +67,15 @@ function convertMs(ms) {
 }
 
 function addLeadingZero(value) {
-  if (value < 10) {
-    return String(value).padStart(2, '0');
-  } else {
-    return value;
-  }
+  return String(value).padStart(2, '0');
 }
 
 function updateTimerValue() {
   const delta = userSelectedDate - Date.now();
   if (delta <= 0) {
     clearInterval(changeDateValue);
+    inputValueTimer.removeAttribute('disabled');
+    inputValueTimer.classList.add('input-check');
     return;
   }
   
